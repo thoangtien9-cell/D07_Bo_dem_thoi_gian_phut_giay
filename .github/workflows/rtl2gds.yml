@@ -1,0 +1,55 @@
+name: RTL to GDSII
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  MA_DE: D07
+  DESIGN_NAME: d07_bcd_core
+  CONFIG: 04_IMPLEMENTATION/scripts/config.json
+
+jobs:
+  mo-phong:
+    name: 1 - Mo phong RTL (Icarus Verilog)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cai Icarus Verilog
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog
+
+      - name: Ghi lai phien ban cong cu
+        run: |
+          iverilog -V | head -1 | tee tool_versions.txt
+          echo "Ngay chay: $(date -Is)" | tee -a tool_versions.txt
+
+      - name: Bien dich va chay testbench
+        run: |
+          iverilog -g2012 -o sim.vvp 04_IMPLEMENTATION/rtl/d07_bcd_core.sv 05_VERIFICATION/testbench/d07_bcd_tb.sv
+          vvp sim.vvp | tee simulation.log
+
+      - name: Kiem log - phai co PASS va khong duoc co loi
+        run: |
+          if grep -qiE "FATAL|mismatch|\bFAIL\b" simulation.log; then
+            echo "::error::Testbench bao loi - xem simulation.log"
+            exit 1
+          fi
+          if ! grep -qi "PASS" simulation.log; then
+            echo "::error::Khong thay dong PASS nao trong log"
+            exit 1
+          fi
+          echo "Mo phong dat."
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mo-phong-${{ env.MA_DE }}
+          path: |
+            simulation.log
+            tool_versions.txt
+            *.vcd
+          if-no-files-found: warn
