@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D07 — Bộ đếm thời gian phút:giây từ xung 1 Hz · Ghi chú thực hiện</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1a1d21; --muted:#5c6570; --line:#e3e7eb;
+  --accent:#1f5fa9; --accent-soft:#eef4fb; --code-bg:#f5f7f9;
+  --ok:#137a4d; --ok-bg:#e8f6ee; --warn:#8a5a00; --warn-bg:#fdf4e2;
+  --bad:#a52020; --bad-bg:#fceded; --open:#7a5ba8; --open-bg:#f3eefa;
+  --maxw:960px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15181c; --fg:#e6e9ec; --muted:#98a2ad; --line:#2a2f36;
+    --accent:#6fa8e0; --accent-soft:#1c2733; --code-bg:#1b1f24;
+    --ok:#5cc08d; --ok-bg:#16291f; --warn:#d8a54a; --warn-bg:#2a2314;
+    --bad:#e88b8b; --bad-bg:#2b1a1a; --open:#b79ad6; --open-bg:#241d2e;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15181c; --fg:#e6e9ec; --muted:#98a2ad; --line:#2a2f36;
+  --accent:#6fa8e0; --accent-soft:#1c2733; --code-bg:#1b1f24;
+  --ok:#5cc08d; --ok-bg:#16291f; --warn:#d8a54a; --warn-bg:#2a2314;
+  --bad:#e88b8b; --bad-bg:#2b1a1a; --open:#b79ad6; --open-bg:#241d2e;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 16px 96px}
+header.doc{
+  border-bottom:1px solid var(--line); margin-bottom:28px; padding:36px 0 22px;
+}
+header.doc .eyebrow{
+  font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--muted); font-weight:600; margin-bottom:10px;
+}
+header.doc h1{font-size:clamp(24px,4.4vw,34px); line-height:1.25; margin:0 0 14px}
+.badges{display:flex; flex-wrap:wrap; gap:7px; margin-top:6px}
+.badge{
+  font-size:12.5px; padding:3px 10px; border-radius:999px;
+  border:1px solid var(--line); color:var(--muted); background:var(--accent-soft);
+  white-space:nowrap;
+}
+.badge.ok{color:var(--ok); background:var(--ok-bg); border-color:transparent}
+.badge.warn{color:var(--warn); background:var(--warn-bg); border-color:transparent}
+.badge.bad{color:var(--bad); background:var(--bad-bg); border-color:transparent}
+.badge.open{color:var(--open); background:var(--open-bg); border-color:transparent}
+nav.toc{
+  border:1px solid var(--line); border-radius:10px; padding:16px 20px;
+  margin:0 0 32px; background:var(--accent-soft);
+}
+nav.toc p{margin:0 0 8px; font-weight:700; font-size:13px; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--muted)}
+nav.toc ul{margin:0; padding-left:20px}
+nav.toc li{margin:3px 0}
+nav.toc a{color:var(--fg); text-decoration:none}
+nav.toc a:hover{color:var(--accent); text-decoration:underline}
+nav.toc ul ul{padding-left:18px; font-size:14.5px}
+h2{font-size:22px; margin:40px 0 12px; padding-bottom:6px; border-bottom:1px solid var(--line)}
+h3{font-size:18px; margin:28px 0 8px}
+h4{font-size:16px; margin:22px 0 6px; color:var(--muted)}
+p{margin:12px 0}
+a{color:var(--accent)}
+ul,ol{padding-left:24px}
+li{margin:4px 0}
+code{
+  font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  font-size:.9em; background:var(--code-bg); padding:1.5px 5px; border-radius:4px;
+}
+pre{
+  background:var(--code-bg); border:1px solid var(--line); border-radius:8px;
+  padding:14px 16px; overflow-x:auto; line-height:1.55; font-size:13.5px;
+}
+pre code{background:none; padding:0; font-size:inherit}
+blockquote{
+  margin:16px 0; padding:2px 18px; border-left:3px solid var(--accent);
+  background:var(--accent-soft); border-radius:0 8px 8px 0; color:var(--fg);
+}
+blockquote p{margin:10px 0}
+.tablewrap{overflow-x:auto; margin:16px 0; -webkit-overflow-scrolling:touch}
+table{border-collapse:collapse; width:100%; font-size:14.5px; min-width:420px}
+th,td{border:1px solid var(--line); padding:7px 11px; text-align:left; vertical-align:top}
+th{background:var(--accent-soft); font-weight:650; white-space:nowrap}
+tbody tr:nth-child(even) td{background:color-mix(in srgb, var(--code-bg) 55%, transparent)}
+hr{border:0; border-top:1px solid var(--line); margin:34px 0}
+footer.doc{
+  margin-top:56px; padding-top:18px; border-top:1px solid var(--line);
+  color:var(--muted); font-size:13.5px;
+}
+.themebtn{
+  position:fixed; right:14px; bottom:14px; z-index:10;
+  border:1px solid var(--line); background:var(--bg); color:var(--muted);
+  border-radius:999px; padding:8px 14px; font-size:13px; cursor:pointer;
+}
+.themebtn:hover{color:var(--fg)}
+@media (max-width:640px){
+  .wrap{padding:0 16px 72px}
+  header.doc{padding:26px 0 18px}
+  nav.toc{padding:14px 16px}
+}
+@media print{
+  .themebtn{display:none}
+  nav.toc{break-inside:avoid}
+  pre,table,blockquote{break-inside:avoid}
+  body{font-size:11pt}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="doc">
+  <div class="eyebrow">RTL2GDS · Đề D07 · Ghi chú thực hiện</div>
+  <h1>D07 — Bộ đếm thời gian phút:giây từ xung 1 Hz · Ghi chú thực hiện</h1>
+  <div class="badges"><span class="badge ">D · Bộ đếm và chia tần</span><span class="badge ">Độ khó: Trung bình</span><span class="badge ">Loại mạch: Tuần tự</span><span class="badge ok">Mô phỏng: PASS</span><span class="badge ">Tổng hợp: 77 cell · 16 FF</span><span class="badge ">Đường tới hạn: 2,4 ns</span><span class="badge warn">Physical design: CHƯA CHẠY</span></div>
+</header>
+<nav class="toc"><p>Mục lục</p><ul><li><a href="#1-bai-toan-nay-thuc-chat-la-gi">1. Bài toán này thực chất là gì</a></li><li><a href="#2-ban-chat-ky-thuat-co-che-hoat-dong">2. Bản chất kỹ thuật — cơ chế hoạt động</a></li><li><a href="#3-doc-ma-nguon-rtl-lam-gi-tung-dong-quan-trong">3. Đọc mã nguồn: RTL làm gì, từng dòng quan trọng</a></li><li><a href="#4-vi-sao-chon-kien-truc-nay">4. Vì sao chọn kiến trúc này</a></li><li><a href="#5-cach-thuc-hien-lo-trinh-8-buoc-tu-dac-ta-toi-gdsii">5. Cách thực hiện — lộ trình 8 bước từ đặc tả tới GDSII</a></li><li><a href="#6-so-lieu-that-da-do-duoc-va-cach-doc-chung">6. Số liệu thật đã đo được và cách đọc chúng</a></li><li><a href="#7-tra-loi-cac-cau-hoi-ky-thuat-cua-charter-muc-2">7. Trả lời các câu hỏi kỹ thuật của Charter (mục 2)</a></li><li><a href="#8-tra-loi-cau-phan-tich-rieng-charter-muc-9">8. Trả lời câu phân tích riêng (Charter mục 9)</a></li><li><a href="#9-nhung-cho-sinh-vien-hay-sai-va-cach-phat-hien">9. Những chỗ sinh viên hay sai và cách phát hiện</a></li><li><a href="#10-cau-hoi-mentor-nen-dat-khi-bao-ve">10. Câu hỏi mentor nên đặt khi bảo vệ</a></li><li><a href="#11-gioi-han-da-chung-minh-duoc-gi-chua-chung-minh-duoc-gi">11. Giới hạn: đã chứng minh được gì, chưa chứng minh được gì</a></li></ul></nav>
+<main>
+<h2 id="1-bai-toan-nay-thuc-chat-la-gi">1. Bài toán này thực chất là gì</h2>
+<p>Nhìn qua, D07 là "đồng hồ bấm giờ" — bài tập quen thuộc. Nhưng ba quyết định kiến trúc ẩn
+trong đề mới là nội dung thật.</p>
+<p><strong>Thứ nhất: <code>tick_1hz</code> là dữ liệu, không phải clock.</strong> Cám dỗ lớn nhất của người mới là
+viết <code>always_ff @(posedge tick_1hz)</code>. Làm vậy tạo ra <strong>miền clock thứ hai</strong> với chu kỳ
+1 giây; STA sẽ phải <code>create_clock -period 1e9</code>, mọi ràng buộc thời gian trở nên vô nghĩa,
+và ranh giới giữa hai miền cần xử lý CDC. RTL của đề làm đúng: một miền clock duy nhất,
+<code>tick_1hz</code> là một điều kiện tiến được lấy mẫu đồng bộ. Netlist xác nhận — cả 16 <code>dfxtp_1</code>
+đều nối <code>.CLK(clk)</code>.</p>
+<p><strong>Thứ hai: BCD hay nhị phân không phải câu hỏi về tiết kiệm, mà về chỗ đặt chi phí.</strong> Nhị
+phân 6+6 bit dùng 12 flip-flop thay vì 16, nhưng cần một bộ chuyển đổi nhị phân → BCD để
+hiển thị. Chi phí không mất đi, nó chỉ chuyển sang tầng ngoài.</p>
+<p><strong>Thứ ba: hơn 94 % không gian mã hoá là bất hợp lệ.</strong> <code>2¹⁶ = 65 536</code> tổ hợp, chỉ 3 600 hợp
+lệ. Một thiết kế cẩu thả sẽ lock-up ở đó. RTL của đề xử lý được — <strong>miễn phí</strong> — nhờ một
+lựa chọn cú pháp tưởng như thẩm mỹ.</p>
+<h2 id="2-ban-chat-ky-thuat-co-che-hoat-dong">2. Bản chất kỹ thuật — cơ chế hoạt động</h2>
+<p><strong>Cơ chế 1 — chuỗi tràn KHÔNG phải một chuỗi.</strong> RTL viết bốn tầng <code>if</code> lồng nhau, đọc lên
+nghe như một chuỗi phụ thuộc. Trong phần cứng thì không. Các cờ "chữ số đầy" đọc từ <strong>bốn
+thanh ghi khác nhau</strong> nên tính được song song; chỉ phép AND cuối là chung, mà AND thì kết
+hợp được nên gộp phẳng được. Kết quả: carry sâu nhất (<code>C2</code>) là <strong>một cổng 5 đầu vào</strong>, và
+độ sâu của tràn 4 tầng <strong>bằng đúng</strong> độ sâu của tràn 1 tầng.</p>
+<p>Đối chiếu với A01 (ripple-carry): ở đó <code>carry[i+1] = a&amp;b | (a^b)&amp;carry[i]</code> — phụ thuộc
+thật sự, không gộp được, <code>O(N)</code>. Ở D07 không có phụ thuộc như vậy, <code>O(1)</code>. <strong>Cùng gọi là
+"chuỗi tràn" nhưng bản chất khác hẳn</strong> — đây là điểm dễ nhầm nhất khi so hai đề.</p>
+<p><strong>Cơ chế 2 — cái giá của gộp phẳng: một cổng chiếm 44 % thời gian.</strong> Gộp phẳng đổi <strong>độ
+sâu</strong> lấy <strong>độ phức tạp cổng</strong>. Cell <code>_072_ a2111oi_0</code> có 5 đầu vào, dùng biến thể <code>_0</code>
+(drive nhỏ nhất thư viện), lái <strong>7 tải</strong>. STA đo: slew đầu ra <strong>1,25 ns</strong>, độ trễ cell
+<strong>1,05 ns</strong> — bằng 44 % của arrival 2,40 ns, và 75 % của phần logic thật 1,40 ns. Nút thắt
+của D07 <strong>không phải độ sâu logic</strong> mà là <strong>khả năng lái của một cell</strong>. Đây là loại vấn đề
+mà đọc RTL không bao giờ thấy được.</p>
+<p><strong>Cơ chế 3 — <code>&lt;</code> thay vì <code>==</code> cho tự phục hồi miễn phí.</strong> Với <code>SU = 12</code> (bất hợp lệ):
+<code>12 &lt; 9</code> sai → nhánh <code>else</code> → <code>SU ← 0</code> + phát carry. Phục hồi sau <strong>1 bước tiến</strong>. Nếu viết
+<code>if (SU == 9) SU&lt;=0 else SU&lt;=SU+1</code>, thì <code>12 → 13 → 14 → 15 → 0</code> — quay vòng 16 thay vì 10,
+<strong>sai nhịp vĩnh viễn</strong>. Netlist xác nhận tool hiện thực đúng <code>≥</code>:
+<code>o31ai_1 _066_</code> cho <code>_021_ = ~((su2|su1|su0) &amp; su3)</code>, bằng 0 đúng khi <code>su ∈ {9…15}</code>.</p>
+<p><strong>Cơ chế 4 — đường tới hạn kết thúc ở một flip-flop không bao giờ đổi.</strong> Endpoint <code>_125_</code>
+là <code>minute_tens[3]</code>. Vì <code>MT ≤ 5</code>, bit 3 luôn bằng 0. Netlist cho thấy vì sao nó vĩnh viễn 0:
+<code>minute_tens[3]next = rst_n &amp; minute_tens[3] &amp; ~C2</code> — vế phải nhân với chính nó.</p>
+<h2 id="3-doc-ma-nguon-rtl-lam-gi-tung-dong-quan-trong">3. Đọc mã nguồn: RTL làm gì, từng dòng quan trọng</h2>
+<pre><code class="language-verilog">end else if (enable &amp;&amp; tick_1hz) begin              // d07_bcd_core.sv, dòng 17
+    if (second_units &lt; 4'd9) begin                  // dòng 18
+        second_units &lt;= second_units + 4'd1;
+    end else begin
+        second_units &lt;= 4'd0;
+        if (second_tens &lt; 4'd5) begin               // dòng 22
+</code></pre>
+<p><strong>Dòng 17</strong> gộp hai điều kiện thành một. Netlist sinh <strong>cả hai dạng</strong>:
+<code>and2_0 _064_</code> (thuận) và <code>nand2_1 _065_</code> (đảo), vì các cell sau dùng cả hai. Từ điểm này
+trở đi, phần còn lại của thiết kế <strong>không phân biệt</strong> <code>enable</code> với <code>tick_1hz</code> — chúng hoàn
+toàn đối xứng về logic. Đó cũng chính là gốc rễ của một lỗ hổng kiểm thử (xem §9).</p>
+<p><strong>Dòng 18, 22, 26, 30</strong> đều dùng <code>&lt;</code>, không dùng <code>==</code>. Bốn dòng này quyết định tính tự phục
+hồi từ 61 936 trạng thái bất hợp lệ (cơ chế 3).</p>
+<p><strong>Cấu trúc <code>if</code> lồng 4 tầng</strong> dòng 18–36 là cách diễn đạt trực quan nhất của "tràn phân
+cấp". Nó <strong>không</strong> sinh ra bốn tầng logic — xem cơ chế 1.</p>
+<pre><code class="language-verilog">always_ff @(posedge clk) begin                      // dòng 11
+    if (!rst_n) begin                               // dòng 12
+</code></pre>
+<p>Không có <code>rst_n</code> trong danh sách nhạy → reset <strong>đồng bộ</strong>. Netlist: không cell <code>dfrtp_*</code>;
+<code>rst_n</code> là toán hạng của cổng cuối trên mọi đường <code>D</code>, ví dụ
+<code>and3b_1 _085_ (.A_N(_027_), .B(rst_n), .C(minute_tens[3]), .X(_003_))</code>.</p>
+<p><strong>Điều RTL KHÔNG có:</strong> không <code>always_comb</code> nào. Bốn cổng ra được gán thẳng trong
+<code>always_ff</code>, nên <code>Q</code> của flip-flop <strong>chính là</strong> chân ra. Hệ quả đo được: trong
+<code>timing_report_max.txt</code> <strong>không có một đường reg→out nào</strong>. Đây là Moore ở dạng thuần khiết
+nhất, và nó bảo đảm <strong>không có glitch</strong> trên cổng ra.</p>
+<h2 id="4-vi-sao-chon-kien-truc-nay">4. Vì sao chọn kiến trúc này</h2>
+<p>Ba căn cứ, theo thứ tự ràng buộc:</p>
+<ol>
+<li><strong>Ứng dụng cần hiển thị.</strong> Charter mục 1 nói rõ: đồng hồ bấm giờ cho máy tập. Đầu ra đi
+   thẳng tới bộ giải mã 7 vạch. Với BCD, chi phí giải mã là <strong>0</strong>; với nhị phân, cần một
+   bộ chia cho 10 hoặc double-dabble — chi phí không mất đi mà chỉ dời sang tầng ngoài.</li>
+<li><strong>Charter mục 10 chốt ngân sách</strong> "BCD: 14 đếm + 1 chọn xuất ≈ 15–17 ô nhớ". Đo được
+   <strong>16</strong> → nằm trong khoảng.</li>
+<li><strong>Một miền clock duy nhất.</strong> <code>tick_1hz</code> phải là dữ liệu. Mọi kiến trúc dùng nó làm clock
+   đều bị loại ngay từ đầu, bất kể tiết kiệm được bao nhiêu FF.</li>
+</ol>
+<h2 id="5-cach-thuc-hien-lo-trinh-8-buoc-tu-dac-ta-toi-gdsii">5. Cách thực hiện — lộ trình 8 bước từ đặc tả tới GDSII</h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Bước</th>
+<th style="text-align: center;">Trạng thái</th>
+<th>Bằng chứng</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Chốt đặc tả và invariant từ Charter mục 1/4/8/9</td>
+<td style="text-align: center;">✅</td>
+<td><code>02_SPECIFICATION/functional_spec.md</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>Mô hình chuẩn Python kiểm <strong>3600 trạng thái duy nhất</strong> + các mốc biên</td>
+<td style="text-align: center;">✅</td>
+<td><code>python_reference_run.log</code> — PASS</td>
+</tr>
+<tr>
+<td>3</td>
+<td>RTL: 4 bộ đếm BCD nối theo chuỗi tràn, một miền clock</td>
+<td style="text-align: center;">✅</td>
+<td><code>d07_bcd_core.sv</code> (39 dòng)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Mô phỏng RTL</td>
+<td style="text-align: center;">⚠️ <strong>PASS nhưng thiếu ca bắt buộc</strong></td>
+<td><code>simulation.log</code>, <code>$finish</code> tại 36036</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Tổng hợp Yosys 0.33 + <code>sky130_fd_sc_hd</code></td>
+<td style="text-align: center;">✅</td>
+<td>77 cell · 16 FF · 665,6384 µm²</td>
+</tr>
+<tr>
+<td>6</td>
+<td>STA với SDC clock thật</td>
+<td style="text-align: center;">✅</td>
+<td>slack 7,49 ns · WNS/TNS 0,00</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Ước lượng công suất</td>
+<td style="text-align: center;">✅</td>
+<td>6,77e-05 W · 97,3 % / 2,7 %</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Physical design (floorplan → GDS) bằng LibreLane + sky130A</td>
+<td style="text-align: center;">⬜</td>
+<td>cần PDK; <code>scripts/04_run_librelane.sh</code></td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>Bước 4 được đánh ⚠️ <strong>có chủ ý</strong>: log ghi PASS, nhưng độ phủ <strong>chưa đạt</strong> yêu cầu Charter
+mục 8 (thiếu ca <code>59:59 → 00:00</code>). Ghi ✅ ở đây sẽ là phát biểu vượt mức.</p>
+</blockquote>
+<h2 id="6-so-lieu-that-da-do-duoc-va-cach-doc-chung">6. Số liệu thật đã đo được và cách đọc chúng</h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Chỉ số</th>
+<th style="text-align: right;">Giá trị</th>
+<th><strong>Chứng minh</strong> gì</th>
+<th><strong>Không chứng minh</strong> gì</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>77 cell</td>
+<td style="text-align: right;">77</td>
+<td>Nhỏ hơn <strong>3 lần</strong> ước lượng Charter (230–320), nhờ chuỗi tràn được gộp phẳng</td>
+<td>Không nói gì về tốc độ</td>
+</tr>
+<tr>
+<td>16 FF</td>
+<td style="text-align: right;">16</td>
+<td>Nằm trong ngân sách Charter mục 10 (15–17)</td>
+<td><strong>Không</strong> khớp về <strong>cấu thành</strong>: 14 hữu ích + 2 hằng 0 + 0 chọn xuất, so với ước lượng 14 + 1 chọn xuất</td>
+</tr>
+<tr>
+<td>665,6384 µm²</td>
+<td style="text-align: right;"></td>
+<td>Diện tích logic sau tổng hợp</td>
+<td><strong>Không</strong> phải diện tích die — chưa floorplan</td>
+</tr>
+<tr>
+<td>slack 7,49 ns</td>
+<td style="text-align: right;"></td>
+<td>Với chu kỳ giả định 10 ns, IO delay 1 ns, clock lý tưởng, netlist đáp ứng setup</td>
+<td><strong>Không</strong> cho phép nói "chạy được ở 100 MHz". Chưa RC dây, chưa CTS, một góc PVT</td>
+</tr>
+<tr>
+<td>arrival 2,40 ns</td>
+<td style="text-align: right;"></td>
+<td>Đường tới hạn, gồm <strong>1,00 ns giả định <code>input_delay</code></strong></td>
+<td>Logic thật chỉ <strong>1,40 ns</strong></td>
+</tr>
+<tr>
+<td><strong>1,05 ns trên <code>_072_</code></strong></td>
+<td style="text-align: right;"></td>
+<td><strong>44 % arrival trong MỘT cell</strong> — nút thắt là fanout/drive, không phải độ sâu</td>
+<td>Không phải lỗi RTL; là việc của bước physical design</td>
+</tr>
+<tr>
+<td>3 cell trên đường tới hạn</td>
+<td style="text-align: right;"></td>
+<td>Nông nhất trong ba đề D05/D06/D07</td>
+<td>Nhưng <strong>chậm nhất</strong> — độ sâu không quyết định tốc độ</td>
+</tr>
+<tr>
+<td>Endpoint = <code>minute_tens[3]</code></td>
+<td style="text-align: right;"></td>
+<td>STA phân tích <strong>cấu trúc</strong>, không phân tích <strong>giá trị</strong></td>
+<td>Đường này <strong>không bao giờ chuyển mạch thật</strong> — là false path về mặt chức năng, nhưng chưa khai báo trong SDC</td>
+</tr>
+<tr>
+<td>WNS/TNS 0,00</td>
+<td style="text-align: right;"></td>
+<td>Không đường nào âm slack</td>
+<td>Chỉ ở góc <code>tt_025C_1v80</code></td>
+</tr>
+<tr>
+<td>6,77e-05 W</td>
+<td style="text-align: right;"></td>
+<td>Ước lượng sau tổng hợp</td>
+<td><strong>Không</strong> phải công suất chip thật — chưa có clock tree (hàng <code>Clock</code> = 0,0 %)</td>
+</tr>
+<tr>
+<td>97,3 % tuần tự</td>
+<td style="text-align: right;"></td>
+<td>1 FF ≈ <strong>140</strong> cell tổ hợp. Hai bit hằng 0 đang tốn ≈ <strong>12 %</strong> tổng công suất</td>
+<td>Không bao gồm công suất cây clock</td>
+</tr>
+<tr>
+<td>Mô phỏng PASS</td>
+<td style="text-align: right;"></td>
+<td>4 assert đúng, phủ 62 bước tiến đầu; 3599 bước chạy không lỗi</td>
+<td><strong>Không</strong> phủ ca <code>59:59→00:00</code>, <strong>không</strong> phủ <code>tick_1hz=0</code>, <strong>không</strong> đấu mô hình chuẩn vào DUT</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-tra-loi-cac-cau-hoi-ky-thuat-cua-charter-muc-2">7. Trả lời các câu hỏi kỹ thuật của Charter (mục 2)</h2>
+<p><strong>Câu 1 — Chuỗi tràn giây→phút hiện ra trong phần cứng như thế nào?</strong>
+<strong>Không phải như một chuỗi.</strong> Netlist cho thấy ba nút carry nằm ở <strong>cùng một mức logic</strong>,
+mỗi nút là <strong>một cổng phức hợp</strong> gộp tất cả các điều kiện cần:</p>
+<pre><code class="language-verilog">nor2_1     _067_ (.A(_020_), .B(_021_), .Y(_022_));                       // C0: 2 đầu vào
+a211oi_1   _068_ (.A1(_016_),.A2(_018_),.B1(_020_),.C1(_021_),.Y(_023_)); // C1: 4 đầu vào
+a2111oi_0  _072_ (.A1(_016_),.A2(_018_),.B1(_020_),.C1(_021_),
+                  .D1(_026_), .Y(_027_));                                  // C2: 5 đầu vào
+</code></pre>
+<p><code>_027_ = 1 ⟺ enable &amp; tick_1hz &amp; (SU≥9) &amp; (ST≥5) &amp; (MU≥9)</code>. Bốn tầng <code>if</code> lồng nhau của
+RTL trở thành <strong>một cổng AND-OR-Invert 5 đầu vào</strong>. Độ sâu của tràn 4 tầng <strong>bằng</strong> độ sâu
+của tràn 1 tầng. Cái giá: số đầu vào của cổng tăng theo số tầng, và cell 5 đầu vào drive
+nhỏ nhất với fanout 7 chính là nút cổ chai của thiết kế (1,05 ns).</p>
+<p><strong>Câu 2 — Đếm BCD hay nhị phân, chọn cách nào và nó đổi số ô nhớ ra sao?</strong>
+Chọn <strong>BCD</strong>, đo được <strong>16 FF</strong>. Bản nhị phân (<code>d07_binary_core.sv</code>) dùng <strong>12 FF</strong> — suy
+chắc chắn từ RTL (<code>minute[5:0]</code> + <code>second[5:0]</code>), nhưng <strong>⬜ chưa tổng hợp</strong> nên chưa có số
+cell/diện tích/slack để so.
+Lý do chọn BCD: chi phí không mất đi mà chỉ <strong>dời chỗ</strong>. Nhị phân tiết kiệm 4 FF trong khối
+nhưng cần một bộ chuyển đổi nhị phân → BCD ở tầng ngoài để hiển thị. Với ứng dụng có LED
+7 vạch, BCD thắng. Với ứng dụng chỉ ghi log, nhị phân thắng.</p>
+<p><strong>Câu 3 — Tổng ô nhớ dự đoán là bao nhiêu?</strong>
+Dự đoán lý thuyết: <strong>14</strong> (<code>4+3+4+3</code>). Đo được: <strong>16</strong>. Chênh lệch <strong>2 bit</strong> nằm ở
+<code>second_tens[3]</code> và <code>minute_tens[3]</code> — hai flip-flop <strong>hằng 0</strong> tồn tại chỉ vì cổng ra rộng
+4 bit theo chuẩn BCD. Yosys không xoá được vì chúng là cổng ra chính.</p>
+<h2 id="8-tra-loi-cau-phan-tich-rieng-charter-muc-9">8. Trả lời câu phân tích riêng (Charter mục 9)</h2>
+<blockquote>
+<p><em>"Có hai bộ đếm module-60 lồng nhau. Kiểm trong báo cáo tổng số flip-flop và đối chiếu
+với ước lượng của mình; giải thích vì sao đếm tới 59 cần 6 bit chứ không phải 8."</em></p>
+</blockquote>
+<p><strong>Phần a — vì sao 6 bit:</strong>
+<code>2⁵ = 32 &lt; 60</code> → 5 bit không đủ. <code>2⁶ = 64 ≥ 60</code> → 6 bit đủ, dư 4 mã.
+<code>⌈log₂ 60⌉ = 6</code>. Con số <strong>8</strong> đến từ thói quen dùng byte, không từ bài toán: một bộ đếm
+8 bit biểu diễn 256 giá trị, thừa <strong>196 giá trị vô dụng</strong>, lãng phí <strong>2 flip-flop mỗi bộ
+đếm</strong>.</p>
+<p><strong>Phần b — đối chiếu ước lượng với số đo:</strong></p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align: right;">Ước lượng</th>
+<th style="text-align: right;">Đo được</th>
+<th>Chênh</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bit đếm hữu ích</td>
+<td style="text-align: right;">14 (<code>4+3+4+3</code>)</td>
+<td style="text-align: right;"><strong>14</strong></td>
+<td>✅ khớp</td>
+</tr>
+<tr>
+<td>Bit hằng 0 do độ rộng cổng ra</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>2</strong></td>
+<td>❌ <strong>+2</strong></td>
+</tr>
+<tr>
+<td>Bit chọn kênh xuất (Charter mục 4)</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td>❌ <strong>−1</strong> — <strong>chưa hiện thực</strong></td>
+</tr>
+<tr>
+<td><strong>Tổng</strong></td>
+<td style="text-align: right;"><strong>15</strong></td>
+<td style="text-align: right;"><strong>16</strong></td>
+<td>+1</td>
+</tr>
+</tbody>
+</table></div>
+<p>Con số tổng nằm trong ngân sách Charter mục 10 (15–17), nhưng <strong>cấu thành khác hẳn</strong>.
+Báo cáo "16 FF, khớp ước lượng" mà không nói ba dòng trên là <strong>báo cáo thiếu</strong>.</p>
+<p><strong>Bằng chứng hai bit hằng 0:</strong></p>
+<pre><code class="language-verilog">// second_tens[3]
+clkinv_1 _061_ (.A(second_tens[3]), .Y(_016_));
+o21ai_0  _109_ (.A1(_020_), .A2(_021_), .B1(rst_n), .Y(_053_));
+nor2_1   _110_ (.A(_016_), .B(_053_), .Y(_011_));
+dfxtp_1  _132_ (.CLK(clk), .D(_011_), .Q(second_tens[3]));
+//  ⇒ _011_ = second_tens[3] &amp; rst_n &amp; ~C0   →  0 vĩnh viễn nếu đang là 0
+
+// minute_tens[3] — cũng là ENDPOINT của đường tới hạn
+and3b_1  _085_ (.A_N(_027_), .B(rst_n), .C(minute_tens[3]), .X(_003_));
+dfxtp_1  _125_ (.CLK(clk), .D(_003_), .Q(minute_tens[3]));
+//  ⇒ _003_ = minute_tens[3] &amp; rst_n &amp; ~C2   →  0 vĩnh viễn
+</code></pre>
+<p><strong>Cái giá đo được của 2 bit thừa:</strong> ≈ <code>2 × (6,59e-05 / 16) = 8,2e-06 W</code>, tức <strong>12 %</strong> tổng
+công suất, để lưu hai giá trị luôn bằng 0. Đây là <strong>ngoại suy từ đơn giá đo được</strong>, không
+phải số đo trực tiếp.</p>
+<h2 id="9-nhung-cho-sinh-vien-hay-sai-va-cach-phat-hien">9. Những chỗ sinh viên hay sai và cách phát hiện</h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Sai lầm</th>
+<th>Hậu quả</th>
+<th>Phát hiện bằng bằng chứng nào</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Coi PASS là đã phủ ca <code>59:59→00:00</code></strong></td>
+<td>Bỏ đúng ca Charter mục 8 bắt buộc và Charter mục 10 gọi là "chỗ hay tắc"</td>
+<td>Đếm bước tiến: <code>59 + 1 + 0 + 3539 = 3599</code> → dừng tại <code>59:59</code>. Bước 3600 không tồn tại. Kiểm chứng: <code>2+59+1+3+3539 = 3604</code> cạnh lên → <code>$finish</code> tại <strong>36036 ns</strong>, khớp log</td>
+</tr>
+<tr>
+<td>Tưởng mô hình chuẩn được đấu vào DUT</td>
+<td>Không có kiểm chứng độc lập nào trong mô phỏng RTL</td>
+<td><code>grep d07_reference d07_bcd_tb.sv</code> → <strong>0 kết quả</strong>. <code>d07_reference.sv</code> dùng giao diện nhị phân, không ghép được với top BCD</td>
+</tr>
+<tr>
+<td>Tưởng <code>tick_1hz</code> đã được kiểm</td>
+<td>DUT bỏ hẳn <code>tick_1hz</code> vẫn PASS → đồng hồ chạy nhanh gấp <code>f_clk</code> lần</td>
+<td>Đọc task <code>tick</code>: <code>tick_1hz=0</code> chỉ tồn tại <strong>0 đơn vị thời gian</strong> giữa hai lời gọi. Tại mọi cạnh lên sau reset, <code>tick_1hz = 1</code></td>
+</tr>
+<tr>
+<td>Tưởng ca <code>enable=0</code> phủ luôn ca <code>tick_1hz=0</code></td>
+<td>Hai tín hiệu vào cùng cổng AND nên phủ cùng đường <strong>logic</strong>, nhưng không chứng minh DUT dùng <code>tick_1hz</code></td>
+<td><code>and2_0 _064_ (.A(enable), .B(tick_1hz))</code> — đối xứng về logic, <strong>không</strong> đối xứng về hệ thống</td>
+</tr>
+<tr>
+<td>Tưởng chuỗi tràn là 4 tầng nối tiếp</td>
+<td>Ước sai độ sâu (8–12 thay vì 3), ước sai đường tới hạn</td>
+<td>STA đếm được <strong>3 cell</strong>; netlist cho thấy <code>a2111oi_0</code> gộp cả 4 tầng</td>
+</tr>
+<tr>
+<td>Nghĩ đường tới hạn chậm vì logic sâu</td>
+<td>Chữa sai chỗ</td>
+<td><code>_072_</code> chiếm <strong>1,05/1,40 = 75 %</strong> phần logic; nó là cell 5 đầu vào, drive <code>_0</code>, fanout 7, slew ra 1,25 ns</td>
+</tr>
+<tr>
+<td>Đi tìm ý nghĩa của endpoint <code>_125_</code></td>
+<td>Bối rối vì nó là bit hằng 0</td>
+<td><code>_125_</code> = <code>minute_tens[3]</code>; <code>MT ≤ 5</code> nên bit 3 không bao giờ bằng 1</td>
+</tr>
+<tr>
+<td>Viết <code>if (SU == 9)</code> cho gọn</td>
+<td>Mất tự phục hồi từ 61 936 trạng thái bất hợp lệ; <code>SU=12</code> sẽ quay vòng 16</td>
+<td>So hai cách viết trên giấy với <code>SU = 12</code>; netlist <code>o31ai_1 _066_</code> hiện thực <code>SU ≥ 9</code>, không phải <code>SU == 9</code></td>
+</tr>
+<tr>
+<td>Dùng <code>tick_1hz</code> làm clock</td>
+<td>Hai miền clock, STA vô nghĩa, cần CDC</td>
+<td>Netlist thật: cả 16 <code>dfxtp_1</code> đều <code>.CLK(clk)</code></td>
+</tr>
+<tr>
+<td>Tưởng reset là bất đồng bộ</td>
+<td>Bỏ cạnh clock lúc <code>rst_n=0</code> → 16 FF giữ <code>x</code></td>
+<td>Netlist không có <code>dfrtp_*</code></td>
+</tr>
+<tr>
+<td>Coi <code>d07_binary_core.sv</code> là một phần thiết kế</td>
+<td>Lẫn lộn số liệu 12 FF với 16 FF</td>
+<td>Không module nào instantiate nó; <code>synth_stat.txt</code> chỉ có <code>=== d07_bcd_core ===</code></td>
+</tr>
+<tr>
+<td>Báo "16 FF khớp ước lượng" mà dừng ở đó</td>
+<td>Khớp con số, khác cấu thành</td>
+<td>Bảng đối chiếu ở §8 phần b</td>
+</tr>
+<tr>
+<td>Nói Charter mục 4 đã thoả</td>
+<td>Thiếu bộ ghép kênh và bit "đang xuất phút"</td>
+<td>Danh sách cổng RTL: 16 bit ra song song, không có <code>minute_sel</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="10-cau-hoi-mentor-nen-dat-khi-bao-ve">10. Câu hỏi mentor nên đặt khi bảo vệ</h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Câu hỏi</th>
+<th>Đáp án mong đợi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Mô phỏng của em có chạy qua <code>59:59 → 00:00</code> không? Chứng minh bằng số</td>
+<td><strong>Không.</strong> <code>59 + 1 + 3539 = 3599</code> bước tiến → dừng tại <code>59:59</code>. <code>$finish</code> tại 36036 ns = 3604 cạnh lên. Bước 3600 chưa bao giờ chạy</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Cần sửa bao nhiêu dòng để phủ ca đó?</td>
+<td>3 dòng: một <code>tick()</code> + một <code>assert(... == 16'h0000)</code> + (tuỳ chọn) một assert kiểm đã tới <code>59:59</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Chuỗi tràn hiện ra trong netlist như thế nào?</td>
+<td><strong>Không phải chuỗi.</strong> Ba carry ở cùng một mức; <code>C2</code> là một cổng <code>a2111oi_0</code> 5 đầu vào gộp cả 4 tầng</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Đường tới hạn có mấy cell? Vì sao vẫn chậm nhất trong ba đề D?</td>
+<td><strong>3 cell</strong>, arrival 2,40 ns. Vì <code>_072_</code> một mình chiếm 1,05 ns — cell 5 đầu vào, drive <code>_0</code>, fanout 7, slew ra 1,25 ns</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Endpoint <code>_125_</code> là bit nào? Nó có ý nghĩa gì?</td>
+<td><code>minute_tens[3]</code> — bit <strong>hằng 0</strong>, vì <code>MT ≤ 5</code>. Đường có slack nhỏ nhất kết thúc ở một FF không bao giờ đổi giá trị</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Vì sao Yosys không xoá hai FF hằng 0 đó?</td>
+<td>Chúng là <strong>cổng ra chính</strong>; tool không được đổi giao diện module và không phân tích khả đạt</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Tổng FF là bao nhiêu? Đối chiếu với ước lượng 14</td>
+<td><strong>16</strong> = 14 hữu ích + 2 hằng 0 + <strong>0</strong> chọn xuất. Khớp ngân sách 15–17 nhưng khác cấu thành</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Vì sao đếm tới 59 cần 6 bit chứ không phải 8?</td>
+<td><code>2⁵=32 &lt; 60 ≤ 64=2⁶</code> → <code>⌈log₂60⌉ = 6</code>. Con số 8 đến từ thói quen dùng byte</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Vì sao RTL viết <code>SU &lt; 9</code> mà không viết <code>SU == 9</code>?</td>
+<td>Để tự phục hồi từ <strong>61 936</strong> trạng thái BCD bất hợp lệ trong 1 bước tiến. Và còn rẻ hơn: <code>o31ai_1</code> một cell</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Testbench có chứng minh DUT dùng <code>tick_1hz</code> không?</td>
+<td><strong>Không.</strong> <code>tick_1hz = 1</code> tại mọi cạnh lên sau reset. Một DUT bỏ hẳn điều kiện đó vẫn PASS</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Đầu ra là Mealy hay Moore? Bằng chứng ở tầng nào?</td>
+<td><strong>Moore thuần</strong> — cổng ra <strong>chính là</strong> <code>Q</code> của FF. Bằng chứng STA: <strong>không có đường reg→out nào</strong> trong report</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Nếu chuyển sang bản nhị phân 6+6 thì tiết kiệm được gì?</td>
+<td>12 FF thay vì 16. Nhưng cần bộ chuyển nhị phân → BCD ở tầng ngoài. Số cell của bản đó <strong>⬜ chưa chạy</strong></td>
+</tr>
+<tr>
+<td>13</td>
+<td>Muốn mở rộng đếm giờ thì tốn bao nhiêu logic mới?</td>
+<td>Tín hiệu <code>C3 = C2 &amp; (MT≥5)</code> <strong>đã tồn tại</strong> trong netlist; chi phí nối ra là 0 cell logic. Nhưng Charter mục 3 liệt giờ vào ngoài phạm vi</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Charter mục 4 đã thoả chưa?</td>
+<td><strong>Chưa</strong> — thiếu bộ ghép kênh <code>uo_out[7:0]</code> (phút HOẶC giây) và bit <code>uio_out[0]</code> "đang xuất phút". Dùng 20 chân thay vì 12</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="11-gioi-han-da-chung-minh-duoc-gi-chua-chung-minh-duoc-gi">11. Giới hạn: đã chứng minh được gì, chưa chứng minh được gì</h2>
+<p><strong>Đã chứng minh, có bằng chứng lưu trong hồ sơ:</strong>
+mô hình Python kiểm <strong>3600 trạng thái phút:giây duy nhất</strong> và chu kỳ khép kín về <code>(0,0)</code>,
+cùng bốn mốc biên gồm <code>59:59 → 00:00</code> (PASS); mô phỏng RTL chạy 3599 bước tiến không lỗi,
+với 4 assert đúng tại các mốc <code>00:00</code>, <code>00:59</code>, <code>01:00</code> và <code>01:00</code> (giữ khi <code>enable=0</code>);
+RTL tổng hợp ra 77 standard cell sky130 với đúng <strong>16</strong> flip-flop, nằm trong ngân sách
+Charter mục 10; STA sau tổng hợp không có đường nào âm slack ở góc <code>tt_025C_1v80</code> với chu
+kỳ giả định 10 ns; thiết kế dùng <strong>một miền clock duy nhất</strong>, <code>tick_1hz</code> là dữ liệu chứ
+không phải clock; đầu ra là Moore thuần, không có đường reg→out nào.</p>
+<p><strong>Chưa chứng minh được:</strong>
+(1) <strong>ca <code>59:59 → 00:00</code></strong> — ca Charter mục 8 liệt kê <strong>bắt buộc</strong> và Charter mục 10 gọi là
+"chỗ hay tắc"; mô phỏng dừng đúng tại <code>59:59</code>, bước quay vòng <strong>chưa từng được thực hiện
+trên RTL</strong> (chỉ có trên mô hình Python);
+(2) rằng DUT thực sự dùng <code>tick_1hz</code> — tín hiệu này bằng 1 tại <strong>mọi</strong> cạnh lên sau reset;
+(3) reset từ một trạng thái khác <code>00:00</code> — TB chỉ reset khi đồng hồ vốn đã ở <code>00:00</code>;
+(4) tính tự phục hồi từ trạng thái BCD bất hợp lệ (INV-9) — suy được từ cấu trúc, <strong>chưa mô
+phỏng</strong>;
+(5) miền giá trị BCD (INV-1) — không assert nào kiểm trong suốt 3599 bước;
+(6) lớp tràn T3 (<code>09:59 → 10:00</code>) — có xảy ra 5 lần nhưng <strong>không assert</strong>;
+(7) chi phí thật của bản nhị phân <code>d07_binary_core.sv</code> — <strong>chưa tổng hợp</strong>;
+(8) hành vi ở mức gate-level, kể cả ảnh hưởng thật của slew 1,25 ns trên <code>_072_</code>;
+(9) mọi kết quả vật lý: floorplan, placement, CTS, routing, DRC, LVS, GDS đều <strong>chưa chạy</strong>;
+(10) các góc PVT khác <code>tt</code>.</p>
+<p><strong>Phát biểu không được dùng:</strong> "đã sign-off", "đã tape-out", "chạy được ở 100 MHz", "đã
+kiểm đủ các ca Charter mục 8". Câu đúng: <em>"sau tổng hợp logic, với các giả định ở
+<code>02_SPECIFICATION/timing.md</code> §3, thiết kế đáp ứng setup với slack 7,49 ns; mô phỏng chức
+năng PASS trên 3599 bước tiến nhưng </em><em>chưa phủ ca quay vòng <code>59:59 → 00:00</code></em><em>, cần bổ sung
+3 dòng testbench trước khi kết luận đạt Charter mục 8."</em></p>
+<hr>
+<p><em>Phiên bản: v1.0 · Ngày: 2026-09-24</em></p>
+</main>
+<footer class="doc">
+  Tài liệu sinh từ <code>implementation-notes_D07.md</code>.
+  Mọi số liệu đều kèm công cụ, phiên bản và lệnh tái lập trong
+  <code>07_TRACEABILITY/evidence_index.md</code>.
+</footer>
+</div>
+<script>
+(function(){
+  var b=document.createElement('button');
+  b.className='themebtn'; b.type='button';
+  function lbl(){var t=document.documentElement.getAttribute('data-theme');
+    return t==='dark'?'Nen sang':(t==='light'?'Nen toi':'Doi nen');}
+  b.textContent=lbl();
+  try{var s=localStorage.getItem('rtl2gds-theme'); if(s)document.documentElement.setAttribute('data-theme',s);}catch(e){}
+  b.textContent=lbl();
+  b.addEventListener('click',function(){
+    var cur=document.documentElement.getAttribute('data-theme');
+    var mq=window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var next=cur?(cur==='dark'?'light':'dark'):(mq?'light':'dark');
+    document.documentElement.setAttribute('data-theme',next);
+    try{localStorage.setItem('rtl2gds-theme',next);}catch(e){}
+    b.textContent=lbl();
+  });
+  document.body.appendChild(b);
+})();
+</script>
+</body>
+</html>

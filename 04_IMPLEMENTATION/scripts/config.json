@@ -1,0 +1,38 @@
+{
+  "project_id": "D07",
+  "title": "Bộ đếm thời gian phút:giây từ xung 1 Hz",
+  "group": "D · Bộ đếm và chia tần",
+  "difficulty": "Trung bình",
+  "circuit_type": "Tuần tự",
+  "charter_scale": "~230–320 cell · 1×1 tile",
+  "top_module": "d07_bcd_core",
+  "clock_port": "clk",
+  "has_clock": true,
+  "expected_ff_zero": false,
+  "technology": "sky130A",
+  "std_cell_library": "sky130_fd_sc_hd",
+  "liberty_corner": "tt_025C_1v80",
+  "flow": "LibreLane/OpenROAD",
+  "measured": {
+    "sim": "PASS",
+    "pyref": "PASS",
+    "synth": "PASS",
+    "sta": "PASS",
+    "cells": 77,
+    "flip_flops": 16,
+    "area_um2": 665.6384,
+    "critical_path_ns": 2.4,
+    "startpoint": "tick_1hz",
+    "endpoint": "_125_",
+    "power_total_w": "6.77e-05"
+  },
+  "not_run": [
+    "floorplan",
+    "placement",
+    "routing",
+    "drc",
+    "lvs",
+    "gds"
+  ],
+  "source_dir_origin": "D07_FINAL_MENTOR_PACKAGE_v1_0"
+}
